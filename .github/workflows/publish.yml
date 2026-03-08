@@ -1,0 +1,123 @@
+name: Publish Nugetz CLI
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-native:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+            artifact: nugetz-linux-x64
+          - os: windows-latest
+            rid: win-x64
+            artifact: nugetz-win-x64
+          - os: macos-latest
+            rid: osx-arm64
+            artifact: nugetz-osx-arm64
+          - os: macos-latest
+            rid: osx-x64
+            artifact: nugetz-osx-x64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Set version in csproj
+        shell: bash
+        run: sed -i.bak "s|<Version>.*</Version>|<Version>${{ steps.version.outputs.VERSION }}</Version>|" Nugetz.Cli.csproj
+
+      - name: Publish native AOT
+        run: dotnet publish -c Release -r ${{ matrix.rid }}
+
+      - name: Archive (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cd bin/Release/net10.0/${{ matrix.rid }}/publish
+          tar czf ${{ github.workspace }}/${{ matrix.artifact }}.tar.gz Nugetz.Cli
+
+      - name: Archive (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path bin/Release/net10.0/${{ matrix.rid }}/publish/Nugetz.Cli.exe -DestinationPath ${{ github.workspace }}/${{ matrix.artifact }}.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ github.workspace }}/${{ matrix.artifact }}.*
+
+  publish-nuget:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Set version in csproj
+        run: sed -i "s|<Version>.*</Version>|<Version>${{ steps.version.outputs.VERSION }}</Version>|" Nugetz.Cli.csproj
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Pack
+        run: dotnet pack -c Release --no-build -o ./nupkg
+
+      - name: Push to NuGet
+        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+  release:
+    needs: [build-native, publish-nuget]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect assets
+        run: |
+          mkdir -p release
+          find artifacts -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec cp {} release/ \;
+          ls -lh release/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release/*

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PublishAot>true</PublishAot>
+
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>nugetz</ToolCommandName>
+    <PackageId>Nugetz.Cli</PackageId>
+    <Version>0.2.0</Version>
+    <Authors>Authaz</Authors>
+    <Description>A modern CLI for discovering and installing NuGet packages. Smart project discovery, interactive multi-select, health scores, and more.</Description>
+    <PackageProjectUrl>https://nugetz.dev</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nugetz-dev/nugetz-cli</RepositoryUrl>
+    <PackageTags>nuget;cli;dotnet;packages;install</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" Version="0.50.0" />
+  </ItemGroup>
+
+</Project>
