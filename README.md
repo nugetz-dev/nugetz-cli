@@ -1,6 +1,6 @@
 # Nugetz CLI
 
-A modern terminal-first tool for discovering and installing NuGet packages in .NET repositories.
+A modern terminal-first tool for discovering, installing, and publishing NuGet packages.
 
 ## Install
 
@@ -57,16 +57,59 @@ nugetz info Newtonsoft.Json
 
 Displays: version, downloads, license, frameworks, dependencies, vulnerabilities, health grade (A-F), and GitHub community signals (stars, issues, contributors).
 
+### `nugetz publish`
+
+Pack and publish a package to nuget.org in one step.
+
+```bash
+# Pack and publish the current project
+nugetz publish
+
+# Publish a specific project
+nugetz publish --project src/MyLib/MyLib.csproj
+
+# Publish an existing .nupkg file
+nugetz publish ./nupkg/MyLib.1.0.0.nupkg
+
+# Pass API key inline (for CI)
+nugetz publish --api-key oy2m...
+```
+
+**How it works:**
+
+- Discovers `.csproj` files (or use `--project` to specify one)
+- Runs `dotnet pack -c Release -o ./nupkg`
+- Pushes the resulting `.nupkg` to nuget.org
+- If you pass a `.nupkg` path directly, it skips packing
+
+### `nugetz apikey`
+
+Manage your NuGet API key.
+
+```bash
+# Store your API key
+nugetz apikey set oy2m...abc123
+
+# Check stored key status
+nugetz apikey status
+
+# Remove stored key
+nugetz apikey remove
+```
+
+Keys are stored in `~/.nugetz/config.json` with restricted file permissions. The `NUGET_API_KEY` environment variable overrides the stored key (useful for CI).
+
 ## Options
 
 | Flag | Command | Description |
 |------|---------|-------------|
 | `--version` | install | Package version to install |
 | `--all` | install | Install into all discovered projects |
-| `--project` | install | Path to a specific .csproj file |
+| `--project` | install, publish | Path to a specific .csproj file |
 | `--yes` | install | Skip confirmation prompt |
 | `--prerelease` | install, search | Include prerelease versions |
 | `--limit` | search | Maximum number of results (default: 10) |
+| `--api-key` | publish | NuGet API key (overrides stored key) |
 
 ## Requirements
 
@@ -75,3 +118,4 @@ Displays: version, downloads, license, frameworks, dependencies, vulnerabilities
 ## Links
 
 - [nugetz.dev](https://nugetz.dev) - Browse NuGet packages online
+- [nugetz.dev/docs](https://nugetz.dev/docs) - Full documentation

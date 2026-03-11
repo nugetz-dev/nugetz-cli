@@ -10,12 +10,12 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>nugetz</ToolCommandName>
     <PackageId>Nugetz.Cli</PackageId>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Authors>Authaz</Authors>
     <Description>A modern CLI for discovering and installing NuGet packages. Smart project discovery, interactive multi-select, health scores, and more.</Description>
     <PackageProjectUrl>https://nugetz.dev</PackageProjectUrl>
     <RepositoryUrl>https://github.com/nugetz-dev/nugetz-cli</RepositoryUrl>
-    <PackageTags>nuget;cli;dotnet;packages;install</PackageTags>
+    <PackageTags>nuget;cli;dotnet;packages;install;publish</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
