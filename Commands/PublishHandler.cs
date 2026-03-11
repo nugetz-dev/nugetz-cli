@@ -10,8 +10,9 @@ public static class PublishHandler
     public static async Task<int> RunAsync(string[] rawArgs)
     {
         var args = new Args(rawArgs);
-        var nupkgPath = args.Positional(0);
         var apiKeyArg = args.Option("--api-key", "-k");
+        var project = args.Option("--project", "-p");
+        var nupkgPath = args.Positional(0);
 
         // Resolve API key
         var apiKey = apiKeyArg ?? ConfigService.GetApiKey();
@@ -24,38 +25,108 @@ public static class PublishHandler
             return 1;
         }
 
-        // Resolve .nupkg path
-        if (nupkgPath is null)
+        var runner = new DotnetCliRunner();
+
+        // If a .nupkg path was given, skip packing and push directly
+        if (nupkgPath is not null && nupkgPath.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
         {
-            var nupkgDir = Path.Combine(Directory.GetCurrentDirectory(), "nupkg");
-            if (!Directory.Exists(nupkgDir))
+            if (!File.Exists(nupkgPath))
             {
-                Output.Error("No ./nupkg/ directory found. Run [white]nugetz pack[/] first.");
+                Output.Error($"File not found: [white]{Markup.Escape(nupkgPath)}[/]");
                 return 1;
             }
-
-            var files = Directory.GetFiles(nupkgDir, "*.nupkg")
-                .OrderByDescending(File.GetLastWriteTimeUtc)
-                .ToList();
-
-            if (files.Count == 0)
-            {
-                Output.Error("No .nupkg files found in ./nupkg/. Run [white]nugetz pack[/] first.");
-                return 1;
-            }
-
-            nupkgPath = files[0];
-            Output.Info($"Publishing: [white]{Markup.Escape(Path.GetFileName(nupkgPath))}[/]");
+            return await PushAsync(runner, nupkgPath, apiKey);
         }
-        else if (!File.Exists(nupkgPath))
+
+        // --- Pack phase ---
+        var projectPath = project ?? nupkgPath;
+
+        if (projectPath is null)
         {
-            Output.Error($"File not found: [white]{Markup.Escape(nupkgPath)}[/]");
+            var discovery = new ProjectDiscoveryService();
+            var projects = discovery.FindProjects(Directory.GetCurrentDirectory());
+
+            if (projects.Count == 0)
+            {
+                Output.Error("No .csproj files found in this directory.");
+                Output.Muted("Run this command inside a .NET project or repository.");
+                return 1;
+            }
+
+            if (projects.Count == 1)
+            {
+                projectPath = projects[0];
+                Output.Info($"Found project: [white]{Markup.Escape(projectPath)}[/]");
+            }
+            else
+            {
+                projectPath = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("Select a project to publish:")
+                        .PageSize(15)
+                        .AddChoices(projects));
+            }
+        }
+        else if (!File.Exists(projectPath))
+        {
+            Output.Error($"Project file not found: [white]{Markup.Escape(projectPath)}[/]");
             return 1;
         }
 
-        var runner = new DotnetCliRunner();
+        Output.Info($"Packing [green]{Markup.Escape(projectPath)}[/]...");
 
-        var (success, output, error) = await AnsiConsole.Status()
+        var (packSuccess, _, packError) = await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .SpinnerStyle(Style.Parse("blue"))
+            .StartAsync("Running dotnet pack...", async _ =>
+                await runner.PackAsync(projectPath));
+
+        if (!packSuccess)
+        {
+            Output.Error("Pack failed.");
+            if (!string.IsNullOrWhiteSpace(packError))
+                AnsiConsole.MarkupLine($"[red]{Markup.Escape(packError.Trim())}[/]");
+            return 1;
+        }
+
+        // Find the generated .nupkg
+        var nupkgDir = Path.Combine(Directory.GetCurrentDirectory(), "nupkg");
+        if (!Directory.Exists(nupkgDir))
+        {
+            Output.Error("Pack succeeded but no ./nupkg/ directory found.");
+            return 1;
+        }
+
+        var latest = Directory.GetFiles(nupkgDir, "*.nupkg")
+            .OrderByDescending(File.GetLastWriteTimeUtc)
+            .FirstOrDefault();
+
+        if (latest is null)
+        {
+            Output.Error("Pack succeeded but no .nupkg file found in ./nupkg/.");
+            return 1;
+        }
+
+        var fileInfo = new FileInfo(latest);
+        var size = fileInfo.Length switch
+        {
+            >= 1_048_576 => $"{fileInfo.Length / 1_048_576.0:F1} MB",
+            >= 1_024 => $"{fileInfo.Length / 1_024.0:F1} KB",
+            _ => $"{fileInfo.Length} B"
+        };
+
+        Output.Success($"Packed [white]{Markup.Escape(Path.GetFileName(latest))}[/] ({size})");
+        AnsiConsole.WriteLine();
+
+        // --- Push phase ---
+        return await PushAsync(runner, latest, apiKey);
+    }
+
+    private static async Task<int> PushAsync(DotnetCliRunner runner, string nupkgPath, string apiKey)
+    {
+        Output.Info($"Publishing [white]{Markup.Escape(Path.GetFileName(nupkgPath))}[/]...");
+
+        var (success, _, error) = await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .SpinnerStyle(Style.Parse("blue"))
             .StartAsync("Pushing to nuget.org...", async _ =>
@@ -71,7 +142,7 @@ public static class PublishHandler
             else if (error.Contains("409") || error.Contains("already exists", StringComparison.OrdinalIgnoreCase))
             {
                 Output.Error("This package version already exists on nuget.org.");
-                Output.Muted("Bump the version in your .csproj and run [white]nugetz pack[/] again.");
+                Output.Muted("Bump the version in your .csproj and try again.");
             }
             else
             {
