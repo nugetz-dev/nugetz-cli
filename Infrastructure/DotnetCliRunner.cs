@@ -14,6 +14,20 @@ public sealed class DotnetCliRunner
         return await RunAsync(args);
     }
 
+    public async Task<(bool Success, string Output, string Error)> PackAsync(string? projectPath)
+    {
+        var args = "pack -c Release -o ./nupkg";
+        if (projectPath is not null)
+            args += $" \"{projectPath}\"";
+        return await RunAsync(args);
+    }
+
+    public async Task<(bool Success, string Output, string Error)> PushAsync(string nupkgPath, string apiKey)
+    {
+        var args = $"nuget push \"{nupkgPath}\" --api-key {apiKey} --source https://api.nuget.org/v3/index.json";
+        return await RunAsync(args);
+    }
+
     private static async Task<(bool Success, string Output, string Error)> RunAsync(string arguments)
     {
         var process = new Process
