@@ -13,17 +13,10 @@ public static class PublishHandler
         var apiKeyArg = args.Option("--api-key", "-k");
         var project = args.Option("--project", "-p");
         var nupkgPath = args.Positional(0);
-
-        // Resolve API key
-        var apiKey = apiKeyArg ?? ConfigService.GetApiKey();
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            Output.Error("No API key found.");
-            AnsiConsole.MarkupLine("[grey]Set one with:[/] [white]nugetz apikey set <key>[/]");
-            AnsiConsole.MarkupLine("[grey]Or pass:[/] [white]nugetz publish --api-key <key>[/]");
-            AnsiConsole.MarkupLine("[grey]Or set:[/] [white]NUGET_API_KEY[/] environment variable");
-            return 1;
-        }
+        var source = args.Option("--source", "-s") ?? "https://api.nuget.org/v3/index.json";
+        var dryRun = args.Flag("--dry-run");
+        var yes = args.Flag("--yes", "-y");
+        var skipDuplicate = args.Flag("--skip-duplicate");
 
         var runner = new DotnetCliRunner();
 
@@ -35,7 +28,8 @@ public static class PublishHandler
                 Output.Error($"File not found: [white]{Markup.Escape(nupkgPath)}[/]");
                 return 1;
             }
-            return await PushAsync(runner, nupkgPath, apiKey);
+            return await ValidateAndMaybePushAsync(
+                runner, nupkgPath, apiKeyArg, source, dryRun, yes, skipDuplicate);
         }
 
         // --- Pack phase ---
@@ -119,18 +113,57 @@ public static class PublishHandler
         AnsiConsole.WriteLine();
 
         // --- Push phase ---
-        return await PushAsync(runner, latest, apiKey);
+        return await ValidateAndMaybePushAsync(
+            runner, latest, apiKeyArg, source, dryRun, yes, skipDuplicate);
     }
 
-    private static async Task<int> PushAsync(DotnetCliRunner runner, string nupkgPath, string apiKey)
+    private static async Task<int> ValidateAndMaybePushAsync(
+        DotnetCliRunner runner,
+        string nupkgPath,
+        string? apiKeyArgument,
+        string source,
+        bool dryRun,
+        bool yes,
+        bool skipDuplicate)
     {
+        var validation = PackageValidator.Validate(nupkgPath);
+        ValidateHandler.Render(validation);
+        if (validation.Status == "invalid")
+        {
+            Output.Error("Publishing stopped because package validation failed.");
+            return 1;
+        }
+        if (dryRun)
+        {
+            Output.Success("Dry run complete. Nothing was published.");
+            return 0;
+        }
+
+        var apiKey = apiKeyArgument ?? ConfigService.GetApiKey();
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            Output.Error("No API key found.");
+            AnsiConsole.MarkupLine("[grey]Set one with:[/] [white]nugetz apikey set <key>[/]");
+            AnsiConsole.MarkupLine("[grey]Or pass:[/] [white]nugetz publish --api-key <key>[/]");
+            AnsiConsole.MarkupLine("[grey]Or set:[/] [white]NUGET_API_KEY[/] environment variable");
+            return 1;
+        }
+
+        if (!yes && !AnsiConsole.Confirm(
+                $"Publish [green]{Markup.Escape(validation.PackageId ?? Path.GetFileName(nupkgPath))} " +
+                $"{Markup.Escape(validation.Version ?? "unknown")}[/] to [cyan]{Markup.Escape(source)}[/]?"))
+        {
+            Output.Muted("Publishing cancelled.");
+            return 0;
+        }
+
         Output.Info($"Publishing [white]{Markup.Escape(Path.GetFileName(nupkgPath))}[/]...");
 
         var (success, _, error) = await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .SpinnerStyle(Style.Parse("blue"))
-            .StartAsync("Pushing to nuget.org...", async _ =>
-                await runner.PushAsync(nupkgPath, apiKey));
+            .StartAsync("Pushing package...", async _ =>
+                await runner.PushAsync(nupkgPath, apiKey, source, skipDuplicate));
 
         if (!success)
         {
@@ -141,7 +174,7 @@ public static class PublishHandler
             }
             else if (error.Contains("409") || error.Contains("already exists", StringComparison.OrdinalIgnoreCase))
             {
-                Output.Error("This package version already exists on nuget.org.");
+                Output.Error("This package version already exists on the selected source.");
                 Output.Muted("Bump the version in your .csproj and try again.");
             }
             else
@@ -154,7 +187,7 @@ public static class PublishHandler
         }
 
         AnsiConsole.WriteLine();
-        Output.Success($"Published [green]{Markup.Escape(Path.GetFileName(nupkgPath))}[/] to nuget.org");
+        Output.Success($"Published [green]{Markup.Escape(Path.GetFileName(nupkgPath))}[/] to [cyan]{Markup.Escape(source)}[/]");
         return 0;
     }
 }

@@ -35,7 +35,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-          dotnet-quality: 'preview'
 
       - name: Extract version from tag
         id: version
@@ -78,7 +77,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-          dotnet-quality: 'preview'
 
       - name: Extract version from tag
         id: version
@@ -95,6 +93,12 @@ jobs:
 
       - name: Pack
         run: dotnet pack -c Release --no-build -o ./nupkg
+
+      - name: Test
+        run: dotnet test Nugetz.Cli.Tests/Nugetz.Cli.Tests.csproj -c Release
+
+      - name: Validate package contents
+        run: dotnet run --project Nugetz.Cli.csproj -c Release --no-build -- validate ./nupkg/Nugetz.Cli.${{ steps.version.outputs.VERSION }}.nupkg --format json
 
       - name: Push to NuGet
         run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
@@ -121,3 +125,18 @@ jobs:
           generate_release_notes: true
           files: |
             release/*
+
+      - name: Verify published downloads
+        shell: bash
+        run: |
+          set -euo pipefail
+          for asset in \
+            nugetz-linux-x64.tar.gz \
+            nugetz-win-x64.zip \
+            nugetz-osx-arm64.tar.gz \
+            nugetz-osx-x64.tar.gz
+          do
+            curl --fail --location --retry 5 --retry-all-errors \
+              --head \
+              "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/${asset}"
+          done

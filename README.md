@@ -1,6 +1,6 @@
 # Nugetz CLI
 
-A modern terminal-first tool for discovering, installing, and publishing NuGet packages.
+Repository-aware NuGet audits, upgrade plans, package validation, and safer publishing for .NET teams.
 
 ## Install
 
@@ -8,114 +8,82 @@ A modern terminal-first tool for discovering, installing, and publishing NuGet p
 dotnet tool install -g Nugetz.Cli
 ```
 
-## Commands
+Nugetz currently requires the .NET 10 SDK. Native downloads are shown on [nugetz.dev/cli](https://nugetz.dev/cli) only after matching release assets have been published.
 
-### `nugetz install <package>`
-
-Install a package into one or more projects. Nugetz discovers `.csproj` files automatically.
+## Audit a repository
 
 ```bash
-# Install latest version
-nugetz install Serilog
-
-# Install specific version
-nugetz install Serilog@4.0.0
-nugetz install Serilog --version 4.0.0
-
-# Install into all projects without prompting
-nugetz install Serilog --all
-
-# Install into a specific project
-nugetz install Serilog --project src/MyApp/MyApp.csproj
+nugetz doctor
+nugetz doctor --why System.Text.Json
+nugetz doctor --format json --fail-on high
+nugetz doctor --fail-on-outdated
 ```
 
-**How it works:**
+`doctor` delegates dependency resolution to the installed .NET SDK, so it understands target frameworks, top-level and transitive dependencies, Central Package Management, and configured/private NuGet sources. Update or advisory failures remain `unknown` rather than being counted as healthy.
 
-- Scans recursively from the current directory for `.csproj` files
-- If one project is found, installs directly
-- If multiple projects are found, shows an interactive checkbox selector
-- Projects are sorted by folder priority: `src/` > `apps/` > `services/` > `tests/`
+Useful options:
 
-### `nugetz search <query>`
+- `--project, -p <path>` audits one project.
+- `--source, -s <url>` selects a package source for update/advisory checks.
+- `--include-prerelease` considers preview updates.
+- `--no-restore` uses existing project assets.
+- `--format table|json` selects human or automation output.
+- `--fail-on low|moderate|high|critical` configures the advisory exit threshold.
+- `--fail-on-outdated` fails CI when updates exist.
 
-Search for NuGet packages from the terminal.
+## Plan and apply upgrades
 
 ```bash
-nugetz search logging
-nugetz search json --limit 20
-nugetz search grpc --prerelease
+nugetz upgrade
+nugetz upgrade Serilog --to 4.3.0
+nugetz upgrade Serilog --apply
+nugetz upgrade --apply --yes
 ```
 
-### `nugetz info <package>`
+Upgrade is preview-only by default. It identifies major-version transitions and Central Package Management files. `--apply` uses the official `dotnet add package` workflow; confirmation is required unless `--yes` is supplied.
 
-Show detailed package information including health score and community signals.
+## Validate and publish packages
 
 ```bash
+nugetz validate --project src/MyLibrary/MyLibrary.csproj
+nugetz validate ./nupkg/MyLibrary.1.0.0.nupkg --format json
+nugetz publish --dry-run
+nugetz publish --project src/MyLibrary/MyLibrary.csproj
+nugetz publish ./nupkg/MyLibrary.1.0.0.nupkg --source https://api.nuget.org/v3/index.json
+```
+
+Validation checks required manifest metadata, declared README/icon/license files, repository and release-note metadata, package size, and potentially sensitive files. Publish always validates first and displays the exact package ID, version, and destination before pushing. Use `--skip-duplicate` for idempotent CI publishing and `--yes` only in intentional non-interactive workflows.
+
+API keys can come from `--api-key`, `NUGET_API_KEY`, or `nugetz apikey set <key>`. Stored keys use restricted file permissions on Unix.
+
+## Search, inspect, and install
+
+```bash
+nugetz search logging --limit 20
 nugetz info Serilog
-nugetz info Newtonsoft.Json
+nugetz install Serilog
+nugetz install Serilog@4.2.0 --project src/App/App.csproj
+nugetz install FluentValidation --all --yes
 ```
 
-Displays: version, downloads, license, frameworks, dependencies, vulnerabilities, health grade (A-F), and GitHub community signals (stars, issues, contributors).
+Package installation discovers `.csproj` files recursively and offers an interactive project selector when needed.
 
-### `nugetz publish`
+## Exit codes
 
-Pack and publish a package to nuget.org in one step.
+- `0`: command completed and configured policy thresholds passed.
+- `1`: a policy threshold, validation, apply, or publishing operation failed.
+- `2`: the requested audit or input was unavailable or invalid.
+
+## Development
 
 ```bash
-# Pack and publish the current project
-nugetz publish
-
-# Publish a specific project
-nugetz publish --project src/MyLib/MyLib.csproj
-
-# Publish an existing .nupkg file
-nugetz publish ./nupkg/MyLib.1.0.0.nupkg
-
-# Pass API key inline (for CI)
-nugetz publish --api-key oy2m...
+dotnet restore Nugetz.Cli.Tests/Nugetz.Cli.Tests.csproj
+dotnet build Nugetz.Cli.csproj
+dotnet test Nugetz.Cli.Tests/Nugetz.Cli.Tests.csproj
 ```
-
-**How it works:**
-
-- Discovers `.csproj` files (or use `--project` to specify one)
-- Runs `dotnet pack -c Release -o ./nupkg`
-- Pushes the resulting `.nupkg` to nuget.org
-- If you pass a `.nupkg` path directly, it skips packing
-
-### `nugetz apikey`
-
-Manage your NuGet API key.
-
-```bash
-# Store your API key
-nugetz apikey set oy2m...abc123
-
-# Check stored key status
-nugetz apikey status
-
-# Remove stored key
-nugetz apikey remove
-```
-
-Keys are stored in `~/.nugetz/config.json` with restricted file permissions. The `NUGET_API_KEY` environment variable overrides the stored key (useful for CI).
-
-## Options
-
-| Flag | Command | Description |
-|------|---------|-------------|
-| `--version` | install | Package version to install |
-| `--all` | install | Install into all discovered projects |
-| `--project` | install, publish | Path to a specific .csproj file |
-| `--yes` | install | Skip confirmation prompt |
-| `--prerelease` | install, search | Include prerelease versions |
-| `--limit` | search | Maximum number of results (default: 10) |
-| `--api-key` | publish | NuGet API key (overrides stored key) |
-
-## Requirements
-
-- .NET 10 SDK or later
 
 ## Links
 
-- [nugetz.dev](https://nugetz.dev) - Browse NuGet packages online
-- [nugetz.dev/docs](https://nugetz.dev/docs) - Full documentation
+- [nugetz.dev](https://nugetz.dev)
+- [Web documentation](https://nugetz.dev/docs)
+- [GitHub](https://github.com/nugetz-dev/nugetz-cli)

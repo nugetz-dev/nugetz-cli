@@ -7,7 +7,8 @@ public sealed class ProjectDiscoveryService
     public List<string> FindProjects(string root)
     {
         var projects = Directory
-            .GetFiles(root, "*.csproj", SearchOption.AllDirectories)
+            .EnumerateFiles(root, "*.csproj", SearchOption.AllDirectories)
+            .Where(path => !IsGeneratedOrVendored(path, root))
             .Select(p => Path.GetRelativePath(root, p))
             .ToList();
 
@@ -21,6 +22,12 @@ public sealed class ProjectDiscoveryService
         });
 
         return projects;
+    }
+
+    private static bool IsGeneratedOrVendored(string path, string root)
+    {
+        var relative = Path.GetRelativePath(root, path).Replace('\\', '/');
+        return relative.Split('/').Any(segment => segment is "bin" or "obj" or ".git" or "node_modules");
     }
 
     private static int GetPriority(string path)

@@ -7,7 +7,7 @@ public sealed class NugetApiClient
 {
     private static readonly HttpClient Http = new()
     {
-        DefaultRequestHeaders = { { "User-Agent", "Nugetz.Cli/0.2.0" } }
+        DefaultRequestHeaders = { { "User-Agent", "Nugetz.Cli/0.4.0" } }
     };
 
     private const string NugetzApi = "https://nugetz.dev/api/cli";
@@ -63,6 +63,7 @@ public sealed class NugetApiClient
             TotalDownloads = pkg.TotalDownloads,
             Verified = pkg.Verified,
             Tags = pkg.Tags,
+            VulnerabilityStatus = "unavailable",
         };
     }
 
@@ -164,6 +165,9 @@ public sealed class PackageDetailInfo
 
     [JsonPropertyName("vulnerabilityCount")]
     public int VulnerabilityCount { get; set; }
+
+    [JsonPropertyName("vulnerabilityStatus")]
+    public string VulnerabilityStatus { get; set; } = "unavailable";
 
     [JsonPropertyName("healthScore")]
     public HealthScoreInfo? HealthScore { get; set; }

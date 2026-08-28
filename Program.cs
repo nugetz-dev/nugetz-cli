@@ -14,6 +14,9 @@ return command switch
     "install" => await InstallHandler.RunAsync(args[1..]),
     "search" => await SearchHandler.RunAsync(args[1..]),
     "info" => await InfoHandler.RunAsync(args[1..]),
+    "doctor" or "audit" => await DoctorHandler.RunAsync(args[1..]),
+    "upgrade" => await UpgradeHandler.RunAsync(args[1..]),
+    "validate" => await ValidateHandler.RunAsync(args[1..]),
     "publish" => await PublishHandler.RunAsync(args[1..]),
     "apikey" => HandleApiKey(args[1..]),
     "--help" or "-h" or "help" => ShowHelp(),
@@ -45,6 +48,9 @@ static int ShowHelp()
     Spectre.Console.AnsiConsole.MarkupLine("  [green]install[/]       <package>   Install a NuGet package into one or more projects");
     Spectre.Console.AnsiConsole.MarkupLine("  [green]search[/]        <query>    Search for NuGet packages");
     Spectre.Console.AnsiConsole.MarkupLine("  [green]info[/]          <package>   Show detailed package information");
+    Spectre.Console.AnsiConsole.MarkupLine("  [green]doctor[/]                    Audit projects, dependencies, updates, and advisories");
+    Spectre.Console.AnsiConsole.MarkupLine("  [green]upgrade[/]       [[package]]  Preview or apply repository package updates");
+    Spectre.Console.AnsiConsole.MarkupLine("  [green]validate[/]      [[package]]  Pack and validate a package without publishing");
     Spectre.Console.AnsiConsole.MarkupLine("  [green]publish[/]       [[project]]  Pack and publish to nuget.org");
     Spectre.Console.AnsiConsole.MarkupLine("  [green]apikey[/]        <sub>       Manage NuGet API key (set|remove|status)\n");
     Spectre.Console.AnsiConsole.MarkupLine("[grey]OPTIONS:[/]");
@@ -55,7 +61,8 @@ static int ShowHelp()
 
 static int ShowVersion()
 {
-    Spectre.Console.AnsiConsole.MarkupLine("[grey]nugetz[/] 0.3.0");
+    var version = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "unknown";
+    Spectre.Console.AnsiConsole.MarkupLine($"[grey]nugetz[/] {version}");
     return 0;
 }
 

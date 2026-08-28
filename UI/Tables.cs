@@ -46,7 +46,7 @@ public static class Tables
             new Markup($"[grey]License:[/]      [white]{Markup.Escape(pkg.LicenseExpression ?? "—")}[/]"),
             new Markup($"[grey]Project:[/]      [cyan]{Markup.Escape(pkg.ProjectUrl ?? "—")}[/]"),
             new Markup($"[grey]Dependencies:[/] [white]{pkg.DependencyCount}[/]"),
-            new Markup($"[grey]Vulns:[/]        {(pkg.VulnerabilityCount == 0 ? "[green]✓ 0[/]" : $"[red]{pkg.VulnerabilityCount}[/]")}"),
+            new Markup($"[grey]Vulns:[/]        {(pkg.VulnerabilityStatus != "verified" ? "[grey]unavailable[/]" : pkg.VulnerabilityCount == 0 ? "[green]✓ 0[/]" : $"[red]{pkg.VulnerabilityCount}[/]")}"),
         };
 
         if (pkg.TargetFrameworks.Count > 0)

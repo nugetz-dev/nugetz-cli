@@ -10,12 +10,14 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>nugetz</ToolCommandName>
     <PackageId>Nugetz.Cli</PackageId>
-    <Version>0.3.0</Version>
+    <Version>0.4.0</Version>
     <Authors>Authaz</Authors>
-    <Description>A modern CLI for discovering and installing NuGet packages. Smart project discovery, interactive multi-select, health scores, and more.</Description>
+    <Description>Repository-aware NuGet audits, upgrade plans, package validation, search, installation, and safer publishing for .NET teams.</Description>
     <PackageProjectUrl>https://nugetz.dev</PackageProjectUrl>
     <RepositoryUrl>https://github.com/nugetz-dev/nugetz-cli</RepositoryUrl>
-    <PackageTags>nuget;cli;dotnet;packages;install;publish</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>https://github.com/nugetz-dev/nugetz-cli/releases</PackageReleaseNotes>
+    <PackageTags>nuget;cli;dotnet;packages;audit;upgrade;dependencies;security;publish</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
@@ -25,7 +27,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Spectre.Console" Version="0.50.0" />
+    <Compile Remove="Nugetz.Cli.Tests/**/*.cs" />
+    <None Remove="Nugetz.Cli.Tests/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" Version="0.57.2" />
   </ItemGroup>
 
 </Project>
