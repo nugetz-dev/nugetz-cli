@@ -20,10 +20,12 @@
     <PackageTags>nuget;cli;dotnet;packages;audit;upgrade;dependencies;security;publish</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>nugetz.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="nugetz.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
