@@ -69,6 +69,9 @@ jobs:
 
   publish-nuget:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -100,8 +103,14 @@ jobs:
       - name: Validate package contents
         run: dotnet run --project Nugetz.Cli.csproj -c Release --no-build -- validate ./nupkg/Nugetz.Cli.${{ steps.version.outputs.VERSION }}.nupkg --format json
 
+      - name: NuGet login with trusted publishing
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: rodrigo.vidal
+
       - name: Push to NuGet
-        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
   release:
     needs: [build-native, publish-nuget]
