@@ -1,6 +1,8 @@
 # Nugetz CLI
 
-Repository-aware NuGet audits, upgrade plans, package validation, and safer publishing for .NET teams.
+NuGet package discovery, local project health checks, preview-first upgrades, package validation, and safer publishing for .NET developers.
+
+Nugetz is built for local package workflows. For continuous repository scanning, full dependency graphs, SBOMs, license and security policies, CI enforcement, and organization reporting, use [Rorix](https://rorix.io/docs/quickstart?utm_source=nugetz-cli&utm_medium=referral&utm_campaign=readme).
 
 ## Install
 
@@ -10,7 +12,7 @@ dotnet tool install -g Nugetz.Cli
 
 Nugetz currently requires the .NET 10 SDK. Native downloads are shown on [nugetz.dev/cli](https://nugetz.dev/cli) only after matching release assets have been published.
 
-## Audit a repository
+## Check local package health
 
 ```bash
 nugetz doctor
@@ -19,11 +21,11 @@ nugetz doctor --format json --fail-on high
 nugetz doctor --fail-on-outdated
 ```
 
-`doctor` delegates dependency resolution to the installed .NET SDK, so it understands target frameworks, top-level and transitive dependencies, Central Package Management, and configured/private NuGet sources. Update or advisory failures remain `unknown` rather than being counted as healthy.
+`doctor` runs an on-demand health check and delegates dependency resolution to the installed .NET SDK, so it understands target frameworks, top-level and transitive dependencies, Central Package Management, and configured/private NuGet sources. Update or advisory failures remain `unknown` rather than being counted as healthy.
 
 Useful options:
 
-- `--project, -p <path>` audits one project.
+- `--project, -p <path>` checks one project instead of auto-discovering local projects.
 - `--source, -s <url>` selects a package source for update/advisory checks.
 - `--include-prerelease` considers preview updates.
 - `--no-restore` uses existing project assets.
@@ -70,9 +72,9 @@ Package installation discovers `.csproj` files recursively and offers an interac
 
 ## Exit codes
 
-- `0`: command completed and configured policy thresholds passed.
-- `1`: a policy threshold, validation, apply, or publishing operation failed.
-- `2`: the requested audit or input was unavailable or invalid.
+- `0`: command completed and configured health thresholds passed.
+- `1`: a health threshold, validation, apply, or publishing operation failed.
+- `2`: the requested check or input was unavailable or invalid.
 
 ## Development
 
@@ -86,4 +88,5 @@ dotnet test Nugetz.Cli.Tests/Nugetz.Cli.Tests.csproj
 
 - [nugetz.dev](https://nugetz.dev)
 - [Web documentation](https://nugetz.dev/docs)
+- [Continuous repository security with Rorix](https://rorix.io/docs/quickstart?utm_source=nugetz-cli&utm_medium=referral&utm_campaign=readme-links)
 - [GitHub](https://github.com/nugetz-dev/nugetz-cli)

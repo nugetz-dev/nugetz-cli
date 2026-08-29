@@ -48,8 +48,8 @@ static int ShowHelp()
     Spectre.Console.AnsiConsole.MarkupLine("  [green]install[/]       <package>   Install a NuGet package into one or more projects");
     Spectre.Console.AnsiConsole.MarkupLine("  [green]search[/]        <query>    Search for NuGet packages");
     Spectre.Console.AnsiConsole.MarkupLine("  [green]info[/]          <package>   Show detailed package information");
-    Spectre.Console.AnsiConsole.MarkupLine("  [green]doctor[/]                    Audit projects, dependencies, updates, and advisories");
-    Spectre.Console.AnsiConsole.MarkupLine("  [green]upgrade[/]       [[package]]  Preview or apply repository package updates");
+    Spectre.Console.AnsiConsole.MarkupLine("  [green]doctor[/]                    Check local projects, dependencies, updates, and advisories");
+    Spectre.Console.AnsiConsole.MarkupLine("  [green]upgrade[/]       [[package]]  Preview or apply local project package updates");
     Spectre.Console.AnsiConsole.MarkupLine("  [green]validate[/]      [[package]]  Pack and validate a package without publishing");
     Spectre.Console.AnsiConsole.MarkupLine("  [green]publish[/]       [[project]]  Pack and publish to nuget.org");
     Spectre.Console.AnsiConsole.MarkupLine("  [green]apikey[/]        <sub>       Manage NuGet API key (set|remove|status)\n");

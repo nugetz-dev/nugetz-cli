@@ -61,7 +61,7 @@ public static class DoctorHandler
 
     private static void Render(DoctorReport report)
     {
-        AnsiConsole.MarkupLine($"\n[bold white]Repository health[/]  [grey]{Markup.Escape(report.Root)}[/]\n");
+        AnsiConsole.MarkupLine($"\n[bold white]Local package health[/]  [grey]{Markup.Escape(report.Root)}[/]\n");
         foreach (var project in report.Projects)
         {
             var relative = Path.GetRelativePath(report.Root, project.Path);
@@ -99,6 +99,10 @@ public static class DoctorHandler
             $"[yellow]{report.Summary.OutdatedCount} outdated[/] · [red]{report.Summary.VulnerableCount} vulnerable[/]");
         if (report.Status != "verified")
             Output.Warning("Some checks were unavailable. Unknown results are not counted as healthy.");
+
+        Output.Muted(
+            "Continuous repository security, SBOMs, and CI policy: " +
+            "https://rorix.io/docs/quickstart?utm_source=nugetz-cli&utm_medium=referral&utm_campaign=doctor");
     }
 
     private static bool HasVulnerabilityAtOrAbove(DoctorReport report, string threshold)

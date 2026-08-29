@@ -12,12 +12,12 @@
     <PackageId>Nugetz.Cli</PackageId>
     <Version>0.4.0</Version>
     <Authors>Authaz</Authors>
-    <Description>Repository-aware NuGet audits, upgrade plans, package validation, search, installation, and safer publishing for .NET teams.</Description>
+    <Description>NuGet package discovery, local project health checks, preview-first upgrades, package validation, installation, and publishing for .NET developers.</Description>
     <PackageProjectUrl>https://nugetz.dev</PackageProjectUrl>
     <RepositoryUrl>https://github.com/nugetz-dev/nugetz-cli</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes>https://github.com/nugetz-dev/nugetz-cli/releases</PackageReleaseNotes>
-    <PackageTags>nuget;cli;dotnet;packages;audit;upgrade;dependencies;security;publish</PackageTags>
+    <PackageTags>nuget;cli;dotnet;packages;search;upgrade;dependencies;validation;publish</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>nugetz.png</PackageIcon>
