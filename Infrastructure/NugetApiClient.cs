@@ -169,32 +169,8 @@ public sealed class PackageDetailInfo
     [JsonPropertyName("vulnerabilityStatus")]
     public string VulnerabilityStatus { get; set; } = "unavailable";
 
-    [JsonPropertyName("healthScore")]
-    public HealthScoreInfo? HealthScore { get; set; }
-
     [JsonPropertyName("communitySignals")]
     public CommunitySignalsInfo? CommunitySignals { get; set; }
-}
-
-public sealed class HealthScoreInfo
-{
-    [JsonPropertyName("score")]
-    public int Score { get; set; }
-
-    [JsonPropertyName("grade")]
-    public string Grade { get; set; } = "";
-
-    [JsonPropertyName("freshness")]
-    public int Freshness { get; set; }
-
-    [JsonPropertyName("popularity")]
-    public int Popularity { get; set; }
-
-    [JsonPropertyName("maintenance")]
-    public int Maintenance { get; set; }
-
-    [JsonPropertyName("security")]
-    public int Security { get; set; }
 }
 
 public sealed class CommunitySignalsInfo

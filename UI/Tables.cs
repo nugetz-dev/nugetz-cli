@@ -13,7 +13,7 @@ public static class Tables
             .BorderColor(Color.Grey)
             .AddColumn(new TableColumn("[blue]Package[/]").NoWrap())
             .AddColumn(new TableColumn("[blue]Version[/]"))
-            .AddColumn(new TableColumn("[blue]Downloads[/]").RightAligned())
+            .AddColumn(new TableColumn("[blue]Lifetime downloads[/]").RightAligned())
             .AddColumn(new TableColumn("[blue]Description[/]"));
 
         foreach (var pkg in packages)
@@ -40,7 +40,7 @@ public static class Tables
                 (pkg.Verified ? " [blue]✓ verified[/]" : "")),
             new Markup(""),
             new Markup($"[grey]Version:[/]      [white]{Markup.Escape(pkg.Version)}[/]"),
-            new Markup($"[grey]Downloads:[/]    [yellow]{Output.FormatDownloads(pkg.TotalDownloads)}[/]"),
+            new Markup($"[grey]Lifetime:[/]     [yellow]{Output.FormatDownloads(pkg.TotalDownloads)} downloads[/]"),
             new Markup($"[grey]Published:[/]    [white]{Output.TimeAgo(pkg.Published)}[/]"),
             new Markup($"[grey]Authors:[/]      [white]{Markup.Escape(pkg.Authors ?? "—")}[/]"),
             new Markup($"[grey]License:[/]      [white]{Markup.Escape(pkg.LicenseExpression ?? "—")}[/]"),
@@ -55,22 +55,7 @@ public static class Tables
             rows.Add(new Markup($"[grey]Frameworks:[/]   {fws}"));
         }
 
-        // Health Score
-        if (pkg.HealthScore is not null)
-        {
-            var h = pkg.HealthScore;
-            var gradeColor = h.Grade switch
-            {
-                "A" => "green",
-                "B" => "blue",
-                "C" => "yellow",
-                "D" => "orange3",
-                _ => "red"
-            };
-            rows.Add(new Markup(""));
-            rows.Add(new Markup($"[grey]Health:[/]       [{gradeColor}]{h.Grade}[/] [{gradeColor}]{h.Score}/100[/]"));
-            rows.Add(new Markup($"  [grey]Freshness {h.Freshness}/25 · Popularity {h.Popularity}/25 · Maintenance {h.Maintenance}/25 · Security {h.Security}/25[/]"));
-        }
+        rows.Add(new Markup("[grey]Evidence:[/]     [white]observations shown separately; no composite grade[/]"));
 
         // Community Signals
         if (pkg.CommunitySignals is not null)
